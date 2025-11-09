@@ -71,11 +71,15 @@ func (s *GociWrapperServer) ParseImageRef(path string) (*ImageRef, error) {
 	}, nil
 }
 
+// /v2/wrap/mirror.gcr.io/woodpeckerci/plugin-ready-release-go/3.4.0/with/registry.yewolf.fr/test/test/latest/manifests/latest
+// /v2/wrap/mirror.gcr.io/woodpeckerci/plugin-ready-release-go/3.4.0/with/registry.yewolf.fr/test/test/latest/manifests/latest
+
 // HandleWrapRequest handles the image wrapping HTTP request
 func (s *GociWrapperServer) HandleWrapRequest(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received request: %s %s", r.Method, r.URL.Path)
 	// Match wrapping requests
 	if !WrappingRegexp.MatchString(r.URL.Path) {
-		http.Error(w, "invalid path, expected /wrap/{upstream-image}/with/{target-image}", http.StatusBadRequest)
+		s.localRegistry.ServeHTTP(w, r)
 		return
 	}
 
@@ -89,6 +93,7 @@ func (s *GociWrapperServer) HandleWrapRequest(w http.ResponseWriter, r *http.Req
 	imageRef, err := s.ParseImageRef(r.URL.Path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("Failed to parse image reference: %v", err)
 		return
 	}
 
@@ -108,9 +113,10 @@ func (s *GociWrapperServer) HandleWrapRequest(w http.ResponseWriter, r *http.Req
 	}
 
 	// Push final image to in-memory registry
-	targetRef, err := name.ParseReference(r.Host + imageRef.Path)
+	targetRef, err := name.ParseReference("localhost:5000" + imageRef.Path)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to parse target reference: %v", err), http.StatusInternalServerError)
+		log.Printf("Failed to parse target reference: %v", err)
 		return
 	}
 
@@ -121,6 +127,7 @@ func (s *GociWrapperServer) HandleWrapRequest(w http.ResponseWriter, r *http.Req
 
 	if err := remote.Write(targetRef, finalImage, pushOpts...); err != nil {
 		http.Error(w, fmt.Sprintf("failed to push wrapped image: %v", err), http.StatusInternalServerError)
+		log.Printf("Failed to push wrapped image: %v", err)
 		return
 	}
 
