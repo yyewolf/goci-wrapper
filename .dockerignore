@@ -1,0 +1,43 @@
+# Ignore all by default
+*
+
+# But not these files needed for build
+!*.go
+!go.mod
+!go.sum
+
+# Security: Explicitly ignore sensitive files
+.git/
+.gitignore
+*.log
+*.tmp
+.env
+.env.*
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+config.json
+.aws/
+.ssh/
+.docker/
+
+# Development files
+README.md
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+Makefile
+*.md
+
+# Test files (optional - uncomment if you don't want tests in image)
+# *_test.go
+# testdata/
+
+# Build artifacts
+goci-wrapper
+*.exe
+*.dll
+*.so
+*.dylib

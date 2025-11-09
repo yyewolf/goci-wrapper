@@ -1,0 +1,17 @@
+when:
+- event: push
+  branch: main
+- event: tag
+
+steps:
+- name: publish
+  image: woodpeckerci/plugin-docker-buildx
+  settings:
+    platforms: linux/amd64
+    repo: registry.yewolf.fr/yyewolf/goci-wrapper
+    registry: registry.yewolf.fr
+    auto_tag: true
+    username:
+      from_secret: REGISTRY_USERNAME
+    password:
+      from_secret: REGISTRY_PASSWORD
